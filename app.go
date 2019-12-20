@@ -39,7 +39,7 @@ func (a *App) Done() {
 }
 
 // Signal renderer
-func (a *App) Rerender() {
+func (a *App) Redraw() {
 	a.cond.Signal()
 }
 
