@@ -6,7 +6,7 @@ import (
 )
 
 type View []string
-type Renderable func() View
+type Renderable func(int, int) View
 
 // Draw all the lines in this view.
 func (v View) Render() {

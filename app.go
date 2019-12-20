@@ -75,8 +75,8 @@ func (a *App) renderLoop() {
 
 // Perform the render
 func (a *App) render() {
-	newRender := a.CurrentView()
 	rows, cols := ansi.WindowSize()
+	newRender := a.CurrentView(rows, cols)
 
 	if rows * cols != a.lastSize {
 

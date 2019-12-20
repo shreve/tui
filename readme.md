@@ -18,7 +18,6 @@ package main
 
 import (
     "github.com/shreve/tui"
-    "github.com/shreve/tui/ansi"
 )
 
 func handleInput(input []byte, app *tui.App) {
@@ -32,9 +31,8 @@ func handleInput(input []byte, app *tui.App) {
     app.Redraw()
 }
 
-func indexView() tui.View {
-    view := make(tui.View, 0)
-    height, width := ansi.WindowSize()
+func indexView(height, width int) tui.View {
+    view := make(tui.View, height)
 
     view[0] = "App Titlebar"
 
