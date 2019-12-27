@@ -20,9 +20,9 @@ import (
     "github.com/shreve/tui"
 )
 
-func handleInput(input []byte, app *tui.App) {
+func handleInput(input string, app *tui.App) {
     switch input[0] {
-    case 3, 113: // ctrl-c, q
+    case "q", tui.CtrlC:
         // Tell the app to gracefully stop
         app.Done()
     }
@@ -34,11 +34,7 @@ func handleInput(input []byte, app *tui.App) {
 func indexView(height, width int) tui.View {
     view := make(tui.View, height)
 
-    view[0] = "App Titlebar"
-
-    for i := 1; i < height; i++ {
-       view[i] = " * line content"
-    }
+    // Draw your app into `view`
 
     return view
 }

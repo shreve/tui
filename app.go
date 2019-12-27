@@ -14,9 +14,31 @@ type App struct {
 	lastRender View
 	lastSize int
 
-	InputHandler func([]byte, *App)
+	InputHandler func(string, *App)
 	CurrentView Renderable
 }
+
+const (
+	KeyEsc = "\x1b"
+	KeyUp = "\x1b[A"
+	KeyDown = "\x1b[B"
+	KeyLeft = "\x1b[D"
+	KeyRight = "\x1b[C"
+	KeyDelete = "\x1b[3~"
+	KeyBackspace = "\u007f"
+	CtrlA = "\x01"
+	CtrlB = "\x02"
+	CtrlC = "\x03"
+	Enter = "\r"
+)
+
+var emptyInputHandler = func(input string, app *App) {
+	switch input {
+	case "q", CtrlC:
+		app.Done()
+	}
+}
+var emptyView = func(int, int) View { return make(View, 0) }
 
 func NewApp() *App {
 
@@ -24,6 +46,8 @@ func NewApp() *App {
 	a := App{}
 	a.cond = *sync.NewCond(&a.lock)
 	a.running = true
+	a.InputHandler = emptyInputHandler
+	a.CurrentView = emptyView
 
 	// Use term handle of stdin to set mode and read in bytes
 	var err error
@@ -99,8 +123,8 @@ func (a *App) inputLoop() {
 		if err != nil {
 			continue
 		}
-		b = b[0:count]
+		input := string(b[0:count])
 
-		a.InputHandler(b, a)
+		a.InputHandler(input, a)
 	}
 }
