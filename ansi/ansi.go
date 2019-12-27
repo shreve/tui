@@ -98,6 +98,10 @@ func NewDisplay(fg, bg int) Display {
 	return d
 }
 
+func (d Display) Code() string {
+	return DisplayCode(d)
+}
+
 // Generate the escape sequence for a given display configuration
 func DisplayCode(d Display) string {
 	attrs := make([]string, 0)
