@@ -23,6 +23,8 @@ const (
 	White = 37
 )
 
+const DisplayResetCode = "\033[0m"
+
 // Clear the entire screen
 func ClearScreen() {
 	fmt.Print("\033[2J")
@@ -125,7 +127,6 @@ func SetDisplay(d Display) {
 	fmt.Print(DisplayCode(d))
 }
 
-const DisplayResetCode = "\033[0m"
 
 // Clear all output formatting
 func ResetDisplay() {
