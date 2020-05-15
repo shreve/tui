@@ -4,9 +4,15 @@ import (
 	"os"
 	"fmt"
 	"sync"
+	"time"
 	"github.com/pkg/term"
 	"github.com/shreve/tui/ansi"
 )
+
+type winSize struct {
+	rows int
+	cols int
+}
 
 type App struct {
 	lock sync.Mutex
@@ -14,10 +20,12 @@ type App struct {
 	running bool
 	term *term.Term
 	lastRender View
-	lastSize int
+	lastSize winSize
+	watchForResize bool
 
 	InputHandler func(string, *App)
 	CurrentView Renderable
+	OnResize func(int, int)
 }
 
 const (
@@ -34,13 +42,14 @@ const (
 	Enter = "\r"
 )
 
-var emptyInputHandler = func(input string, app *App) {
+var defaultInputHandler = func(input string, app *App) {
 	switch input {
 	case "q", CtrlC:
 		app.Done()
 	}
 }
-var emptyView = func(int, int) View { return make(View, 0) }
+var defaultView = func(int, int) View { return make(View, 0) }
+var defaultOnResize = func (int, int) { }
 
 func NewApp() *App {
 
@@ -48,8 +57,10 @@ func NewApp() *App {
 	a := App{}
 	a.cond = *sync.NewCond(&a.lock)
 	a.running = true
-	a.InputHandler = emptyInputHandler
-	a.CurrentView = emptyView
+	a.watchForResize = true
+	a.InputHandler = defaultInputHandler
+	a.CurrentView = defaultView
+	a.OnResize = defaultOnResize
 
 	// Use term handle of stdin to set mode and read in bytes
 	var err error
@@ -93,6 +104,10 @@ func (a *App) Run() {
 	a.term.SetCbreak()
 	defer a.term.Restore()
 
+	if a.watchForResize {
+		go a.resizeWatcher()
+	}
+
 	go a.renderLoop()
 	a.inputLoop()
 }
@@ -110,12 +125,13 @@ func (a *App) renderLoop() {
 // Perform the render
 func (a *App) render() {
 	rows, cols := ansi.WindowSize()
+	size := winSize{rows, cols}
 	newRender := a.CurrentView(rows, cols)
 
-	if rows * cols != a.lastSize {
+	if size != a.lastSize {
 
 		// If the window is a different size, re-draw everything
-		a.lastSize = rows * cols
+		a.lastSize = size
 		newRender.Render()
 	} else {
 
@@ -136,5 +152,19 @@ func (a *App) inputLoop() {
 		input := string(b[0:count])
 
 		a.InputHandler(input, a)
+	}
+}
+
+func (a *App) resizeWatcher() {
+	tick := time.NewTicker(100 * time.Millisecond)
+	defer tick.Stop()
+	for {
+		<- tick.C
+		rows, cols := ansi.WindowSize()
+		size := winSize{rows, cols}
+		if size != a.lastSize {
+			a.OnResize(rows, cols)
+			a.render()
+		}
 	}
 }
