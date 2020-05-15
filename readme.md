@@ -9,7 +9,6 @@ This tool primarily handles:
  * Setting the output mode of the terminal for easy ANSI code interaction
 
 There are more features in the works to quickly develop interface components.
-Currently in dev is a table for rendering generic tabular data.
 
 ## Usage
 
@@ -61,3 +60,14 @@ cursor.Up() // true
 cursor.Left() // false
 cursor.Right() // false
 ```
+
+## Upcoming Features
+
+These features are either in-progress or desired for the future
+
+* Tables -- working on a type that can take a slice of structs and turn it into
+  a list view
+* Dedicated header and footer -- allow dedicated render funcs for top and bottom
+  of app. This would limit the view funcs to the spaces in between
+* Resize event -- spin off goroutine which watches for different window sizes and
+  calls redraw
