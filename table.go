@@ -2,7 +2,9 @@ package tui
 
 import (
 	"fmt"
+	"bytes"
 	"reflect"
+	"unicode/utf8"
 	"github.com/shreve/tui/ansi"
 )
 
@@ -74,8 +76,14 @@ func (t *Table) Body() []string {
 
 // Make a table-cell-style string out of an input to be a given total length
 func rightPad(input string, length int) string {
-	for len(input) < (length - 2) {
+	for utf8.RuneCountInString(input) < (length - 2) {
 		input += " "
 	}
-	return " " + input[0:length - 2] + " "
+	out := bytes.Buffer{}
+	for utf8.RuneCountInString(out.String()) < length - 2 {
+		r, size := utf8.DecodeRuneInString(input)
+		out.WriteRune(r)
+		input = input[size:]
+	}
+	return " " + out.String() + " "
 }

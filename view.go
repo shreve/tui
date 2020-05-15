@@ -20,7 +20,7 @@ func (v View) Render() {
 // errors when terminal output has changed without our knowledge.
 func (v View) RenderFrom(o View) {
 	for i := 0; i < len(v); i++ {
-		if i > len(o) || v[i] != o[i] {
+		if i >= len(o) || i >= len(v) || v[i] != o[i] {
 			v.drawLine(i)
 		}
 	}
