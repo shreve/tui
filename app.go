@@ -22,33 +22,11 @@ type App struct {
 	lastRender View
 	lastSize winSize
 	watchForResize bool
-
-	InputHandler func(string, *App)
-	CurrentView Renderable
+	modes map[int]*Mode
+	mode *Mode
 	OnResize func(int, int)
 }
 
-const (
-	KeyEsc = "\x1b"
-	KeyUp = "\x1b[A"
-	KeyDown = "\x1b[B"
-	KeyLeft = "\x1b[D"
-	KeyRight = "\x1b[C"
-	KeyDelete = "\x1b[3~"
-	KeyBackspace = "\u007f"
-	CtrlA = "\x01"
-	CtrlB = "\x02"
-	CtrlC = "\x03"
-	Enter = "\r"
-)
-
-var defaultInputHandler = func(input string, app *App) {
-	switch input {
-	case "q", CtrlC:
-		app.Done()
-	}
-}
-var defaultView = func(int, int) View { return make(View, 0) }
 var defaultOnResize = func (int, int) { }
 
 func NewApp() *App {
@@ -58,8 +36,8 @@ func NewApp() *App {
 	a.cond = *sync.NewCond(&a.lock)
 	a.running = true
 	a.watchForResize = true
-	a.InputHandler = defaultInputHandler
-	a.CurrentView = defaultView
+	a.modes = make(map[int]*Mode)
+	a.mode = &defaultMode
 	a.OnResize = defaultOnResize
 
 	// Use term handle of stdin to set mode and read in bytes
@@ -68,6 +46,16 @@ func NewApp() *App {
 	if err != nil { panic(err) }
 
 	return &a
+}
+
+func (a *App) AddMode(id int, mode *Mode) {
+	a.modes[id] = mode
+}
+
+func (a *App) SetMode(id int) {
+	a.mode = a.modes[id]
+	a.mode.Init()
+	a.Redraw()
 }
 
 // Finish execution by closing render and input loops
@@ -126,7 +114,7 @@ func (a *App) renderLoop() {
 func (a *App) render() {
 	rows, cols := ansi.WindowSize()
 	size := winSize{rows, cols}
-	newRender := a.CurrentView(rows, cols)
+	newRender := a.mode.View(rows, cols)
 
 	if size != a.lastSize {
 
@@ -151,7 +139,7 @@ func (a *App) inputLoop() {
 		}
 		input := string(b[0:count])
 
-		a.InputHandler(input, a)
+		a.mode.InputHandler(input, a)
 	}
 }
 
