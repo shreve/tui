@@ -69,5 +69,5 @@ These features are either in-progress or desired for the future
   a list view
 * Dedicated header and footer -- allow dedicated render funcs for top and bottom
   of app. This would limit the view funcs to the spaces in between
-* Resize event -- spin off goroutine which watches for different window sizes and
-  calls redraw
+* Better state structure -- more guidance in place for managing app state {
+  id, view, input handler, transition event }
