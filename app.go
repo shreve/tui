@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"os"
+	"fmt"
 	"sync"
 	"github.com/pkg/term"
 	"github.com/shreve/tui/ansi"
@@ -60,6 +62,14 @@ func NewApp() *App {
 // Finish execution by closing render and input loops
 func (a *App) Done() {
 	a.running = false
+}
+
+func (a *App) Panic(msg string) {
+	ansi.RestoreState()
+	ansi.ShowCursor()
+	a.term.Restore()
+	fmt.Println(msg)
+	os.Exit(1)
 }
 
 // Signal renderer
