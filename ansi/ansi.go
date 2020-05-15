@@ -25,26 +25,59 @@ const (
 
 const DisplayResetCode = "\033[0m"
 
-// Clear the entire screen
+const (
+	// Clear entire screen
+	clearScreen = "\033[2J"
+
+	// Erase entire line regardless of cursor position
+	clearLine = "\033[2K"
+
+	// Erase from cursor, left
+	clearLineLeft = "\033[1K"
+
+	// Set cursor position (row, column), 1-indexed
+	setCursorPos = "\033[%d;%dH"
+
+	// Print the cursor position back into stdin
+	getCursorPos = "\033[6n"
+
+	// Stop displaying cursor
+	showCursor = "\033[?25h"
+
+	// Start showing cursor if stopped
+	hideCursor = "\033[?25l"
+)
+
 func ClearScreen() {
-	fmt.Print("\033[2J")
+	fmt.Print(clearScreen)
 }
 
-// Erase entire contents of this line regardless of cursor position within line
 func ClearLine() {
-	fmt.Print("\033[2K")
+	fmt.Print(clearLine)
+}
+
+func ClearRestOfLine() {
+	fmt.Print(clearLineLeft)
+}
+
+func HideCursor() {
+	fmt.Print(hideCursor);
+}
+
+func ShowCursor() {
+	fmt.Print(showCursor);
 }
 
 // Set cursor position. If beyond size of terminal, behavior is undefined.
 func MoveCursor(row, col int) {
-	fmt.Printf("\033[%d;%dH", row + 1, col + 1)
+	fmt.Printf(setCursorPos, row + 1, col + 1)
 }
 
 // Ask terminal for current cursor position
 func GetCursor() (int, int) {
 
 	// Print the query sequence
-	os.Stdout.Write([]byte("\033[6n"))
+	os.Stdout.Write([]byte(getCursorPos))
 
 	// Read the response sequence
 	b := make([]byte, 15)
@@ -61,16 +94,6 @@ func GetCursor() (int, int) {
 	row, _ := strconv.Atoi(string(b[2:split]))
 	col, _ := strconv.Atoi(string(b[split+1:end]))
 	return row, col
-}
-
-// Stop displaying cursor
-func HideCursor() {
-	fmt.Print("\033[?25l");
-}
-
-// Start displaying cursor
-func ShowCursor() {
-	fmt.Print("\033[?25h");
 }
 
 type winsize struct {
@@ -126,7 +149,6 @@ func DisplayCode(d Display) string {
 func SetDisplay(d Display) {
 	fmt.Print(DisplayCode(d))
 }
-
 
 // Clear all output formatting
 func ResetDisplay() {
