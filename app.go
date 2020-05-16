@@ -22,8 +22,8 @@ type App struct {
 	lastRender     View
 	lastSize       winSize
 	watchForResize bool
-	modes          map[int]*Mode
-	mode           *Mode
+	modes          map[int]Mode
+	mode           Mode
 
 	Cursor   Cursor
 	OnResize func(int, int)
@@ -38,8 +38,8 @@ func NewApp() *App {
 	a.cond = *sync.NewCond(&a.lock)
 	a.running = true
 	a.watchForResize = true
-	a.modes = make(map[int]*Mode)
-	a.mode = defaultMode
+	a.modes = make(map[int]Mode)
+	a.mode = &DefaultMode{&a}
 	a.OnResize = defaultOnResize
 
 	// Use term handle of stdin to set mode and read in bytes
@@ -52,13 +52,12 @@ func NewApp() *App {
 	return &a
 }
 
-func (a *App) AddMode(id int, mode *Mode) {
+func (a *App) AddMode(id int, mode Mode) {
 	a.modes[id] = mode
 }
 
 func (a *App) SetMode(id int) {
 	a.mode = a.modes[id]
-	a.mode.Init()
 	a.Redraw()
 }
 
@@ -118,7 +117,7 @@ func (a *App) renderLoop() {
 func (a *App) render() {
 	rows, cols := ansi.WindowSize()
 	size := winSize{rows, cols}
-	newRender := a.mode.View(rows, cols, &a.mode.Cursor)
+	newRender := a.mode.Render(rows, cols)
 
 	if size != a.lastSize {
 
@@ -143,7 +142,8 @@ func (a *App) inputLoop() {
 		}
 		input := string(b[0:count])
 
-		a.mode.InputHandler(input, a, &a.mode.Cursor)
+		a.mode.InputHandler(input)
+		a.Redraw()
 	}
 }
 

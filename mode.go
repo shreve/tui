@@ -1,31 +1,21 @@
 package tui
 
-type Mode struct {
-	View         Renderable
-	InputHandler InputHandler
-	Init         func()
-	Cursor       Cursor
+type Inputable interface {
+	InputHandler(string)
+}
+
+type Mode interface {
+	Renderable
+	Inputable
 }
 
 var noop = func() {}
 
-func NewMode(v Renderable, i InputHandler) *Mode {
-	m := Mode{}
-	m.View = v
-	m.InputHandler = i
-	m.Init = noop
-	m.Cursor = NewCursor(0, 1)
-	return &m
+type DefaultMode struct {
+	app *App
 }
 
-var DefaultInputHandler = func(input string, app *App, cursor *Cursor) {
-	switch input {
-	case "q", CtrlC:
-		app.Done()
-	}
-}
-
-func defaultView(height, width int, cursor *Cursor) View {
+func (d *DefaultMode) Render(height, width int) View {
 	view := make(View, 0)
 	view[0] = "Hello! Thanks for using shreve/tui!"
 	view[1] = "To get started, make a new mode to replace this one."
@@ -33,4 +23,11 @@ func defaultView(height, width int, cursor *Cursor) View {
 	return view
 }
 
-var defaultMode = NewMode(defaultView, DefaultInputHandler)
+func (d *DefaultMode) InputHandler(in string) {
+	switch in {
+	case "q", CtrlC:
+		d.app.Done()
+	}
+}
+
+func (d *DefaultMode) Init() { }

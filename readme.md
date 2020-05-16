@@ -66,7 +66,7 @@ cursor.Right() // false
 These features are either in-progress or desired for the future
 
 * Tables -- working on a type that can take a slice of structs and turn it into
-  a list view
+  a list view, including scrolling via the cursor
 * Dedicated header and footer -- allow dedicated render funcs for top and bottom
   of app. This would limit the view funcs to the spaces in between
 * Better state structure -- more guidance in place for managing app state {
