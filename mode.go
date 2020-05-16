@@ -1,15 +1,9 @@
 package tui
 
-type Inputable interface {
-	InputHandler(string)
-}
-
 type Mode interface {
 	Renderable
 	Inputable
 }
-
-var noop = func() {}
 
 type DefaultMode struct {
 	app *App
@@ -29,5 +23,3 @@ func (d *DefaultMode) InputHandler(in string) {
 		d.app.Done()
 	}
 }
-
-func (d *DefaultMode) Init() { }

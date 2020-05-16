@@ -14,7 +14,9 @@ const (
 	Enter        = "\r"
 )
 
-type InputHandler func(string, *App, *Cursor)
+type Inputable interface {
+	InputHandler(string)
+}
 
 const (
 	WasdCursor = iota

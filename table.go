@@ -15,11 +15,13 @@ type Table struct {
 	Widths   []int
 	Records  []interface{}
 	Height   int
+	Width    int
 	Selected int
 }
 
-func NewTable(records interface{}) *Table {
+func NewTable(records interface{}, height int) *Table {
 	t := Table{}
+	t.Height = height
 	s := reflect.ValueOf(records)
 	if s.Kind() != reflect.Slice {
 		panic("Non-slice supplied to tui.NewTable")
@@ -50,7 +52,8 @@ func (t *Table) Heading() string {
 }
 
 // Pull out the data from records based on column names
-func (t *Table) Body() (out View) {
+func (t *Table) Body() View {
+	out := make(View, t.Height)
 
 	// Provided height includes heading
 	h := t.Height - 1
@@ -71,7 +74,7 @@ func (t *Table) Body() (out View) {
 		if i == t.Selected {
 			line += ansi.DisplayResetCode
 		}
-		out = append(out, line)
+		out[i] = line
 	}
 
 	return out
