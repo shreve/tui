@@ -52,6 +52,14 @@ func (c *Cursor) Right() bool {
 	return false
 }
 
+func (c *Cursor) Top() {
+	c.row = 0
+}
+
+func (c *Cursor) Bottom() {
+	c.row = c.height
+}
+
 func (c *Cursor) SetSize(height, width int) {
 	if height > 0 {
 		c.height = height - 1
