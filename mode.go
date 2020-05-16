@@ -16,7 +16,7 @@ func NewMode(v Renderable, i InputHandler) *Mode {
 	m.View = v
 	m.InputHandler = i
 	m.Init = noop
-	m.Cursor = NewCursor(ansi.WindowSize())
+	m.Cursor = NewCursor(0, 1)
 	return &m
 }
 

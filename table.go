@@ -50,9 +50,10 @@ func (t *Table) Heading() string {
 }
 
 // Pull out the data from records based on column names
-func (t *Table) Body() []string {
-	out := make([]string, 0)
-	h := t.Height
+func (t *Table) Body() (out View) {
+
+	// Provided height includes heading
+	h := t.Height - 1
 	if len(t.Records) < h { h = len(t.Records) }
 
 	for i := 0; i < h;  i++ {
