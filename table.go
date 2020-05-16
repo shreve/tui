@@ -246,7 +246,7 @@ func (t *Table) ClearSearch() {
 // Returns the index of the record associated with the currently selected value.
 func (t *Table) SelectedRecord() int {
 	selected, _ := t.Cursor.Position()
-	return t.values[selected].recordIndex
+	return t.values[t.results[selected]].recordIndex
 }
 
 func (t *Table) resetResults() {
