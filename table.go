@@ -257,6 +257,9 @@ func (t *Table) resetResults() {
 }
 
 // Make a table-cell-style string out of an input to be a given total length
+// We use special utf8 functions rather than just len() here because multi-byte
+// characters mess up alignment. We want to do our best to have `length` visible
+// runes rather than just bytes.
 func rightPad(input string, length int) string {
 	for utf8.RuneCountInString(input) < (length - 2) {
 		input += " "
