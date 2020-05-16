@@ -21,7 +21,7 @@ func (c *Cursor) Up() bool {
 }
 
 func (c *Cursor) Down() bool {
-	if c.Row < c.Height {
+	if c.Row < (c.Height - 1) {
 		c.Row++;
 		return true;
 	}

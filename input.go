@@ -14,4 +14,58 @@ const (
 	Enter = "\r"
 )
 
-type InputHandler func(string, *App)
+type InputHandler func(string, *App, *Cursor)
+
+const (
+	WasdCursor = iota
+	ArrowCursor
+	ViCursor
+)
+
+func InputMoveCursor(mode int, input string, cursor *Cursor) bool {
+	switch mode {
+	case WasdCursor:
+		switch input {
+		case "w":
+			cursor.Up()
+		case "a":
+			cursor.Left()
+		case "s":
+			cursor.Down()
+		case "d":
+			cursor.Right()
+		default:
+			return false
+		}
+	case ArrowCursor:
+		switch input {
+		case KeyUp:
+			cursor.Up()
+		case KeyLeft:
+			cursor.Left()
+		case KeyDown:
+			cursor.Down()
+		case KeyRight:
+			cursor.Right()
+		default:
+			return false
+		}
+	case ViCursor:
+		switch input {
+		case "h":
+			cursor.Left()
+		case "j":
+			cursor.Down()
+		case "k":
+			cursor.Up()
+		case "l":
+			cursor.Right()
+		default:
+			return false
+		}
+
+	default:
+		return false
+	}
+	return true
+}
