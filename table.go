@@ -219,9 +219,8 @@ func (t *Table) Body() View {
 		// Write out the content for each column.
 		for j := 0; j < len(t.Columns); j++ {
 			width := int(t.Widths[j] * float32(t.Width))
-			line.WriteString(
-				rightPad(
-					fmt.Sprintf("%s", t.values[t.results[index]].columns[j]), width))
+			value := t.values[t.results[index]].columns[j]
+			line.WriteString(rightPad(fmt.Sprintf("%s", value), width))
 		}
 
 		// Reset the style and save the line
@@ -231,8 +230,11 @@ func (t *Table) Body() View {
 
 	// If we are currently searching, add info about the search to the bottom
 	if t.searching {
-		out[len(out) - 1] = ansi.DisplayResetCode +
-			fmt.Sprintf(" Searching For \"%s\"", t.query)
+		searchLine := bytes.NewBufferString(ansi.DisplayResetCode)
+		searchLine.WriteString(titleDisplay)
+		searchLine.WriteString(
+			rightPad(fmt.Sprintf(" Searching For \"%s\"", t.query), t.Width))
+		out[len(out) - 1] = searchLine.String()
 	}
 
 	return out
