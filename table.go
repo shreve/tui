@@ -1,20 +1,20 @@
 package tui
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
+	"github.com/shreve/tui/ansi"
 	"reflect"
 	"unicode/utf8"
-	"github.com/shreve/tui/ansi"
 )
 
 // Table is a structure for drawing tabular data. Data is any slice of structs.
 // Supply column names and widths to pull data out of records and draw.
 type Table struct {
-	Columns []string
-	Widths []int
-	Records []interface{}
-	Height int
+	Columns  []string
+	Widths   []int
+	Records  []interface{}
+	Height   int
 	Selected int
 }
 
@@ -54,9 +54,11 @@ func (t *Table) Body() (out View) {
 
 	// Provided height includes heading
 	h := t.Height - 1
-	if len(t.Records) < h { h = len(t.Records) }
+	if len(t.Records) < h {
+		h = len(t.Records)
+	}
 
-	for i := 0; i < h;  i++ {
+	for i := 0; i < h; i++ {
 		line := ""
 		if i == t.Selected {
 			line += highlightedDisplay
@@ -81,7 +83,7 @@ func rightPad(input string, length int) string {
 		input += " "
 	}
 	out := bytes.Buffer{}
-	for utf8.RuneCountInString(out.String()) < length - 2 {
+	for utf8.RuneCountInString(out.String()) < length-2 {
 		r, size := utf8.DecodeRuneInString(input)
 		out.WriteRune(r)
 		input = input[size:]

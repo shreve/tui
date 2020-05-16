@@ -7,8 +7,8 @@ import (
 
 type State struct {
 	number int
-	count uint
-	input string
+	count  uint
+	input  string
 }
 
 var state State

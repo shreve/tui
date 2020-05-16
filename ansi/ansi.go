@@ -2,10 +2,10 @@ package ansi
 
 import (
 	"C"
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
-	"bytes"
 	"strconv"
 	"strings"
 	"syscall"
@@ -13,14 +13,14 @@ import (
 )
 
 const (
-	Black = 30
-	Red = 31
-	Green = 32
-	Yellow = 33
-	Blue = 34
+	Black   = 30
+	Red     = 31
+	Green   = 32
+	Yellow  = 33
+	Blue    = 34
 	Magenta = 35
-	Cyan = 36
-	White = 37
+	Cyan    = 36
+	White   = 37
 )
 
 const DisplayResetCode = "\033[0m"
@@ -61,16 +61,16 @@ func ClearRestOfLine() {
 }
 
 func HideCursor() {
-	fmt.Print(hideCursor);
+	fmt.Print(hideCursor)
 }
 
 func ShowCursor() {
-	fmt.Print(showCursor);
+	fmt.Print(showCursor)
 }
 
 // Set cursor position. If beyond size of terminal, behavior is undefined.
 func MoveCursor(row, col int) {
-	fmt.Printf(setCursorPos, row + 1, col + 1)
+	fmt.Printf(setCursorPos, row+1, col+1)
 }
 
 // Ask terminal for current cursor position
@@ -92,7 +92,7 @@ func GetCursor() (int, int) {
 
 	// Convert the read strings to integers
 	row, _ := strconv.Atoi(string(b[2:split]))
-	col, _ := strconv.Atoi(string(b[split+1:end]))
+	col, _ := strconv.Atoi(string(b[split+1 : end]))
 	return row, col
 }
 
@@ -111,7 +111,7 @@ func WindowSize() (int, int) {
 }
 
 type Display struct {
-	Fg, Bg int
+	Fg, Bg                                          int
 	Bright, Dim, Underscore, Blink, Reverse, Hidden bool
 }
 
@@ -130,14 +130,30 @@ func (d Display) Code() string {
 // Generate the escape sequence for a given display configuration
 func DisplayCode(d Display) string {
 	attrs := make([]string, 0)
-	if d.Bright { attrs = append(attrs, "1") }
-	if d.Dim { attrs = append(attrs, "2") }
-	if d.Underscore { attrs = append(attrs, "4") }
-	if d.Blink { attrs = append(attrs, "5") }
-	if d.Reverse { attrs = append(attrs, "7") }
-	if d.Hidden { attrs = append(attrs, "8") }
-	if d.Fg != 0 { attrs = append(attrs, strconv.Itoa(d.Fg)) }
-	if d.Bg != 0 { attrs = append(attrs, strconv.Itoa(d.Bg + 10)) }
+	if d.Bright {
+		attrs = append(attrs, "1")
+	}
+	if d.Dim {
+		attrs = append(attrs, "2")
+	}
+	if d.Underscore {
+		attrs = append(attrs, "4")
+	}
+	if d.Blink {
+		attrs = append(attrs, "5")
+	}
+	if d.Reverse {
+		attrs = append(attrs, "7")
+	}
+	if d.Hidden {
+		attrs = append(attrs, "8")
+	}
+	if d.Fg != 0 {
+		attrs = append(attrs, strconv.Itoa(d.Fg))
+	}
+	if d.Bg != 0 {
+		attrs = append(attrs, strconv.Itoa(d.Bg+10))
+	}
 
 	out := "\033["
 	out += strings.Join(attrs, ";")

@@ -1,15 +1,13 @@
 package tui
 
-import "github.com/shreve/tui/ansi"
-
 type Mode struct {
-	View Renderable
+	View         Renderable
 	InputHandler InputHandler
-	Init func()
-	Cursor Cursor
+	Init         func()
+	Cursor       Cursor
 }
 
-var noop = func() { }
+var noop = func() {}
 
 func NewMode(v Renderable, i InputHandler) *Mode {
 	m := Mode{}

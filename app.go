@@ -1,12 +1,12 @@
 package tui
 
 import (
-	"os"
 	"fmt"
-	"sync"
-	"time"
 	"github.com/pkg/term"
 	"github.com/shreve/tui/ansi"
+	"os"
+	"sync"
+	"time"
 )
 
 type winSize struct {
@@ -15,21 +15,21 @@ type winSize struct {
 }
 
 type App struct {
-	lock sync.Mutex
-	cond sync.Cond
-	running bool
-	term *term.Term
-	lastRender View
-	lastSize winSize
+	lock           sync.Mutex
+	cond           sync.Cond
+	running        bool
+	term           *term.Term
+	lastRender     View
+	lastSize       winSize
 	watchForResize bool
-	modes map[int]*Mode
-	mode *Mode
+	modes          map[int]*Mode
+	mode           *Mode
 
-	Cursor Cursor
+	Cursor   Cursor
 	OnResize func(int, int)
 }
 
-var defaultOnResize = func (int, int) { }
+var defaultOnResize = func(int, int) {}
 
 func NewApp() *App {
 
@@ -45,7 +45,9 @@ func NewApp() *App {
 	// Use term handle of stdin to set mode and read in bytes
 	var err error
 	a.term, err = term.Open("/dev/stdin")
-	if err != nil { panic(err) }
+	if err != nil {
+		panic(err)
+	}
 
 	return &a
 }
@@ -149,7 +151,7 @@ func (a *App) resizeWatcher() {
 	tick := time.NewTicker(100 * time.Millisecond)
 	defer tick.Stop()
 	for {
-		<- tick.C
+		<-tick.C
 		rows, cols := ansi.WindowSize()
 		size := winSize{rows, cols}
 		if size != a.lastSize {
