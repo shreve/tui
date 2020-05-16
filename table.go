@@ -3,6 +3,12 @@
 //
 // Display, search, and select tabular data and render into a tui.View
 //
+// General data flow:
+// 1. Update -> add new records
+// 2. Fetch  -> capture string values from records
+// 3. Search -> filter values into results
+// 4. Draw   -> render results into table
+//
 
 // TODO: Replace Widths with Width, and auto-size columns
 // TODO: Only collect values once when the list of records changes
@@ -18,6 +24,7 @@ import (
 	"reflect"
 	"unicode/utf8"
 	"strings"
+	"sync"
 )
 
 // Table is a structure for drawing tabular data. Data is any slice of structs.
@@ -28,6 +35,9 @@ type Table struct {
 	// reflection more than necessary.
 	values    []row
 
+	// Results are indices of values returned from a search.
+	results   []int
+
 	// Are we searching, and what for? Run a strings.Contains query on each
 	// value for a record to select.
 	searching bool
@@ -36,16 +46,19 @@ type Table struct {
 	// Go structs supplied to the table. Panic if these aren't structs.
 	records  []interface{}
 
+	// General lock for multi-threaded weirdness
+	lock     sync.Mutex
+
 	// Which row of the table is selected?
 	Cursor   Cursor
 
 	// What are the names of the columns and how wide are they?
 	Columns  []string
-	Widths   []int
+	Widths   []float32
 
 	// At what size are we able to render this table?
 	Height   int
-	// Width    int
+	Width    int
 }
 
 // row is a stringified record, which points back to its entry in records
@@ -54,15 +67,12 @@ type row struct {
 	columns     []string
 }
 
-func NewTable(records interface{}, height int) *Table {
-	t := Table{}
-	t.Height = height
-	t.Update(records)
-	return &t
-}
-
 // Update the internal data of the table.
-func (t *Table) Update(records interface{}) {
+func (t *Table) Update(records interface{}, columns []string) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	t.Columns = columns
 
 	// The supplied records must be a slice of structs
 	s := reflect.ValueOf(records)
@@ -78,11 +88,78 @@ func (t *Table) Update(records interface{}) {
 	for i := 0; i < s.Len(); i++ {
 		t.records[i] = s.Index(i).Interface()
 	}
+
+	// Pull strings out of our []interface{} records and perform our search
+
+	// Reset the collection
+	t.values = make([]row, len(t.records))
+
+	// For each row:
+	for i := 0; i < len(t.records); i++ {
+
+		// Save the record it came from.
+		row := row{i, make([]string, len(t.Columns))}
+
+		// For each column:
+		for j := 0; j < len(t.Columns); j++ {
+
+			// Get the value from the record by this column's name
+			value := reflect.ValueOf(t.records[i]).FieldByName(t.Columns[j])
+
+			// Cast the value to a string.
+			row.columns[j] = fmt.Sprintf("%v", value)
+		}
+
+		// Add the found row to the list of values
+		t.values[i] = row
+	}
+
+	// Bound our cursor to the potentially newly modified list
+	t.Cursor.SetSize(len(t.values), 1)
+
+	// Reset the filter
+	t.resetResults()
+}
+
+func (t *Table) Search(query string) {
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
+	t.searching = true
+	t.query = query
+
+	t.results = make([]int, 0)
+
+	// Get our search query ready (lower to lower comparison)
+	needle := strings.ToLower(t.query)
+
+	for i := 0; i < len(t.values); i++ {
+
+		matched := false
+
+		for j := 0; j < len(t.Columns); j++ {
+			haystack := strings.ToLower(t.values[i].columns[j])
+
+			// If we are searching, see if this value matches the query.
+			if strings.Contains(haystack, needle) {
+				matched = true
+			}
+		}
+
+		if matched {
+			t.results = append(t.results, i)
+		}
+	}
+
+	// Bound our cursor to the potentially newly modified list
+	t.Cursor.SetSize(len(t.results), 1)
 }
 
 // Compute the table into a View
 func (t *Table) Draw() (view View) {
-	t.Fetch()
+	t.lock.Lock()
+	defer t.lock.Unlock()
+
 	view = append(view, t.Heading())
 	return append(view, t.Body()...)
 }
@@ -94,7 +171,8 @@ var highlightedDisplay = ansi.DisplayCode(ansi.NewDisplay(ansi.Black, ansi.Yello
 func (t *Table) Heading() string {
 	out := bytes.NewBufferString(titleDisplay)
 	for i := 0; i < len(t.Columns); i++ {
-		out.WriteString(rightPad(t.Columns[i], t.Widths[i]))
+		width := int(t.Widths[i] * float32(t.Width))
+		out.WriteString(rightPad(t.Columns[i], width))
 	}
 	out.WriteString(ansi.DisplayResetCode)
 	return out.String()
@@ -114,8 +192,8 @@ func (t *Table) Body() View {
 	}
 
 	// If we can't fill the whole space, only fill with what we have.
-	if len(t.values) < height {
-		height = len(t.values)
+	if len(t.results) < height {
+		height = len(t.results)
 	}
 
 	// If the current selection is beyond the height of our viewport, we need to
@@ -140,10 +218,10 @@ func (t *Table) Body() View {
 
 		// Write out the content for each column.
 		for j := 0; j < len(t.Columns); j++ {
+			width := int(t.Widths[j] * float32(t.Width))
 			line.WriteString(
 				rightPad(
-					fmt.Sprintf("%s", t.values[index].columns[j]),
-					t.Widths[j]))
+					fmt.Sprintf("%s", t.values[t.results[index]].columns[j]), width))
 		}
 
 		// Reset the style and save the line
@@ -160,55 +238,6 @@ func (t *Table) Body() View {
 	return out
 }
 
-// Pull strings out of our []interface{} records and perform our search
-func (t *Table) Fetch() {
-
-	// Reset the collection
-	t.values = make([]row, 0)
-
-	// Get our search query ready (lower to lower comparison)
-	needle := strings.ToLower(t.query)
-
-	// For each row:
-	for i := 0; i < len(t.records); i++ {
-
-		// Save the record it came from.
-		row := row{i, make([]string, len(t.Columns))}
-
-		matched := false
-
-		// For each column:
-		for j := 0; j < len(t.Columns); j++ {
-
-			// Get the value from the record by this column's name
-			value := reflect.ValueOf(t.records[i]).FieldByName(t.Columns[j])
-
-			// Cast the value to a string.
-			row.columns[j] = fmt.Sprintf("%v", value)
-
-			// If we are searching, see if this value matches the query.
-			if !t.searching ||
-				strings.Contains(strings.ToLower(row.columns[j]), needle) {
-				matched = true
-			}
-		}
-
-		// Add the found row to the list of values
-		if matched {
-			t.values = append(t.values, row)
-		}
-	}
-
-	// Bound our cursor to the potentially newly modified list
-	t.Cursor.SetSize(len(t.values), 1)
-}
-
-// The search is performed on Draw(), but this informs us we need to perform it.
-func (t *Table) Search(query string) {
-	t.searching = true
-	t.query = query
-}
-
 // If we're keeping this table around, we need to be able to clear search mode.
 func (t *Table) ClearSearch() {
 	t.searching = false
@@ -218,6 +247,13 @@ func (t *Table) ClearSearch() {
 func (t *Table) SelectedRecord() int {
 	selected, _ := t.Cursor.Position()
 	return t.values[selected].recordIndex
+}
+
+func (t *Table) resetResults() {
+	t.results = make([]int, len(t.values))
+	for i := 0; i < len(t.values); i++ {
+		t.results[i] = i
+	}
 }
 
 // Make a table-cell-style string out of an input to be a given total length
