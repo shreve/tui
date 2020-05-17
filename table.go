@@ -10,10 +10,8 @@
 // 4. Draw   -> render results into table
 //
 
-// TODO: Replace Widths with Width, and auto-size columns
-// TODO: Only collect values once when the list of records changes
-// TODO: Create more natural "pushing" scrolling
 // TODO: Extract style into config
+// TODO: Extract widths generation to be recalled upon Width change
 
 package tui
 
@@ -22,9 +20,9 @@ import (
 	"fmt"
 	"github.com/shreve/tui/ansi"
 	"reflect"
-	"unicode/utf8"
 	"strings"
 	"sync"
+	"unicode/utf8"
 )
 
 // Table is a structure for drawing tabular data. Data is any slice of structs.
@@ -33,10 +31,10 @@ type Table struct {
 
 	// Values are extracted from records. This is done once to avoid using
 	// reflection more than necessary.
-	values    []row
+	values []row
 
 	// Results are indices of values returned from a search.
-	results   []int
+	results []int
 
 	// Are we searching, and what for? Run a strings.Contains query on each
 	// value for a record to select.
@@ -44,21 +42,23 @@ type Table struct {
 	query     string
 
 	// Go structs supplied to the table. Panic if these aren't structs.
-	records  []interface{}
+	records []interface{}
+
+	// Generated widths for columns based on content length and Table width
+	widths []int
 
 	// General lock for multi-threaded weirdness
-	lock     sync.Mutex
+	lock sync.Mutex
 
 	// Which row of the table is selected?
-	Cursor   Cursor
+	Cursor Cursor
 
-	// What are the names of the columns and how wide are they?
-	Columns  []string
-	Widths   []float32
+	// What are the names of the columns?
+	Columns []string
 
 	// At what size are we able to render this table?
-	Height   int
-	Width    int
+	Height int
+	Width  int
 }
 
 // row is a stringified record, which points back to its entry in records
@@ -89,10 +89,16 @@ func (t *Table) Update(records interface{}, columns []string) {
 		t.records[i] = s.Index(i).Interface()
 	}
 
-	// Pull strings out of our []interface{} records and perform our search
+	if len(t.records) == 0 {
+		return
+	}
+
+	// Pull strings out of our []interface{} records
 
 	// Reset the collection
 	t.values = make([]row, len(t.records))
+
+	lengths := make([]int, len(t.Columns))
 
 	// For each row:
 	for i := 0; i < len(t.records); i++ {
@@ -108,10 +114,29 @@ func (t *Table) Update(records interface{}, columns []string) {
 
 			// Cast the value to a string.
 			row.columns[j] = fmt.Sprintf("%v", value)
+
+			lengths[j] += len(row.columns[j])
 		}
 
 		// Add the found row to the list of values
 		t.values[i] = row
+	}
+
+	total_length := 0
+	for i := 0; i < len(lengths); i++ {
+		lengths[i] /= len(t.records)
+		total_length += lengths[i]
+	}
+
+	t.widths = make([]int, len(t.Columns))
+
+	for i := 0; i < len(lengths); i++ {
+		pct := float32(lengths[i]) / float32(total_length)
+		t.widths[i] = int(pct * float32(t.Width))
+	}
+
+	for i := 0; sum(t.widths) <= (t.Width + 1); i++ {
+		t.widths[i % len(t.widths)]++
 	}
 
 	// Bound our cursor to the potentially newly modified list
@@ -171,8 +196,7 @@ var highlightedDisplay = ansi.DisplayCode(ansi.NewDisplay(ansi.Black, ansi.Yello
 func (t *Table) Heading() string {
 	out := bytes.NewBufferString(titleDisplay)
 	for i := 0; i < len(t.Columns); i++ {
-		width := int(t.Widths[i] * float32(t.Width))
-		out.WriteString(rightPad(t.Columns[i], width))
+		out.WriteString(rightPad(t.Columns[i], t.widths[i]))
 	}
 	out.WriteString(ansi.DisplayResetCode)
 	return out.String()
@@ -181,6 +205,10 @@ func (t *Table) Heading() string {
 // Pull out the data from records based on column names
 func (t *Table) Body() View {
 	out := make(View, t.Height)
+
+	if len(t.records) == 0 {
+		return out
+	}
 
 	// Provided height includes heading. Body height is one less.
 	height := t.Height - 1
@@ -218,9 +246,8 @@ func (t *Table) Body() View {
 
 		// Write out the content for each column.
 		for j := 0; j < len(t.Columns); j++ {
-			width := int(t.Widths[j] * float32(t.Width))
 			value := t.values[t.results[index]].columns[j]
-			line.WriteString(rightPad(fmt.Sprintf("%s", value), width))
+			line.WriteString(rightPad(fmt.Sprintf("%s", value), t.widths[j]))
 		}
 
 		// Reset the style and save the line
@@ -234,7 +261,7 @@ func (t *Table) Body() View {
 		searchLine.WriteString(titleDisplay)
 		searchLine.WriteString(
 			rightPad(fmt.Sprintf(" Searching For \"%s\"", t.query), t.Width))
-		out[len(out) - 1] = searchLine.String()
+		out[len(out)-1] = searchLine.String()
 	}
 
 	return out
@@ -274,4 +301,11 @@ func rightPad(input string, length int) string {
 	}
 	out.WriteString(" ")
 	return out.String()
+}
+
+func sum(nums []int) (n int) {
+	for _, i := range nums {
+		n += i
+	}
+	return
 }
