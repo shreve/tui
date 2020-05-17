@@ -54,6 +54,9 @@ func NewApp() *App {
 
 func (a *App) AddMode(id int, mode Mode) {
 	a.modes[id] = mode
+	if id == 0 {
+		a.SetMode(0)
+	}
 }
 
 func (a *App) SetMode(id int) {

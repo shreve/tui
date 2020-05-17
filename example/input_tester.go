@@ -5,40 +5,41 @@ import (
 	"github.com/shreve/tui"
 )
 
-type State struct {
-	number int
-	count  uint
+type InputMode struct {
+	number int64
+	count  uint64
 	input  string
 }
 
-var state State
+func (m *InputMode) InputHandler(input string) {
 
-func inputHandler(input string, app *tui.App) {
-	state.input = input
-	state.count++
+	m.input = input
+	m.count++
+
 	switch input {
+
 	case "q", tui.CtrlC:
 		app.Done()
+
 	case tui.KeyUp, tui.KeyRight:
-		state.number++
+		m.number++
+
 	case tui.KeyDown, tui.KeyLeft:
-		state.number--
+		m.number--
 	}
-	app.Redraw()
 }
 
-func view(height, width int) tui.View {
+func (m *InputMode) Render(height, width int) tui.View {
 	view := make(tui.View, height)
 	view[0] = "Input Value Tester"
-	view[1] = fmt.Sprintf("  Number: %d, Count: %d", state.number, state.count)
-	view[2] = fmt.Sprintf("  Bytes: %v, String: %#v", []byte(state.input), state.input)
+	view[1] = fmt.Sprintf("  Number: %d, Count: %d", m.number, m.count)
+	view[2] = fmt.Sprintf("  Bytes: %v, String: %#v", []byte(m.input), m.input)
 	return view
 }
 
+var app = tui.NewApp()
+
 func main() {
-	a := tui.NewApp()
-	state.count = 0
-	a.InputHandler = inputHandler
-	a.CurrentView = view
-	a.Run()
+	app.AddMode(0, &InputMode{})
+	app.Run()
 }
