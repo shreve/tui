@@ -185,6 +185,10 @@ func (t *Table) Draw() (view View) {
 	t.lock.Lock()
 	defer t.lock.Unlock()
 
+	if len(t.records) == 0 {
+		return make(View, t.Height)
+	}
+
 	view = append(view, t.Heading())
 	return append(view, t.Body()...)
 }
