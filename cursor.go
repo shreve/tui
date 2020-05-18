@@ -17,7 +17,7 @@ func (c *Cursor) Position() (int, int) {
 }
 
 func (c *Cursor) Size() (int, int) {
-	return c.height, c.width
+	return (c.height + 1), (c.width + 1)
 }
 
 func (c *Cursor) Up() bool {
