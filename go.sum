@@ -1,8 +1,4 @@
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 h1:A7GG7zcGjl3jqAqGPmcNjd/D9hzL95SuoOQAaFNdLU0=
 github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942/go.mod h1:eCbImbZ95eXtAUIbLAuAVnBnwf83mjf6QIVH8SHYwqQ=
-github.com/shreve/tui/ansi v0.0.0-20191220203406-d5e623f711ad h1:A5oAfguavJhmih38gbenOi18FTxZXbpv/jfgmqO+3qc=
-github.com/shreve/tui/ansi v0.0.0-20191220203406-d5e623f711ad/go.mod h1:CUYtjaasjjvkAHUZqw22dcvLYjpx5kPsgMoSxG+WKfk=
-github.com/shreve/tui/ansi v0.0.0-20191227040747-e717313e9341 h1:M2jUBwhohX+P8GAPH8Hlatjr2n1ECjyHo7mumeh1DIA=
-github.com/shreve/tui/ansi v0.0.0-20191227040747-e717313e9341/go.mod h1:CUYtjaasjjvkAHUZqw22dcvLYjpx5kPsgMoSxG+WKfk=
 golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 h1:Dho5nD6R3PcW2SH1or8vS0dszDaXRxIw55lBX7XiE5g=
 golang.org/x/sys v0.0.0-20191224085550-c709ea063b76/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=

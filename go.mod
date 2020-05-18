@@ -7,3 +7,5 @@ require (
 	github.com/shreve/tui/ansi v0.0.0-20191227040747-e717313e9341
 	golang.org/x/sys v0.0.0-20191224085550-c709ea063b76 // indirect
 )
+
+replace github.com/shreve/tui/ansi => ./ansi
