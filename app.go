@@ -60,7 +60,10 @@ func (a *App) AddMode(id int, mode Mode) {
 }
 
 func (a *App) SetMode(id int) {
-	a.mode = a.modes[id]
+	a.mode, ok = a.modes[id]
+	if ! ok {
+		a.Panic("Set mode to a mode that doesn't exist.")
+	}
 	a.Redraw()
 }
 

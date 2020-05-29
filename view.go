@@ -33,4 +33,5 @@ func (v View) drawLine(i int) {
 	ansi.MoveCursor(i, 0)
 	ansi.ClearLine()
 	fmt.Print(v[i])
+	ansi.ResetDisplay() // Don't allow lines to bleed over
 }
