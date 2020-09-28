@@ -294,9 +294,13 @@ func (t *Table) resetResults() {
 // characters mess up alignment. We want to do our best to have `length` visible
 // runes rather than just bytes.
 func rightPad(input string, length int) string {
+	truncated := true
+
 	for utf8.RuneCountInString(input) < (length - 2) {
 		input += " "
+		truncated = false
 	}
+
 	out := bytes.NewBufferString(" ")
 	for utf8.RuneCountInString(out.String()) < length-2 {
 		r, size := utf8.DecodeRuneInString(input)
@@ -304,7 +308,14 @@ func rightPad(input string, length int) string {
 		input = input[size:]
 	}
 	out.WriteString(" ")
-	return out.String()
+	result := out.String()
+
+	if truncated {
+		index := len(result) - 2
+		result = result[:index] + "…" + result[index+1:]
+	}
+
+	return result
 }
 
 func sum(nums []int) (n int) {
