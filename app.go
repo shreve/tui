@@ -62,7 +62,7 @@ func (a *App) AddMode(id int, mode Mode) {
 func (a *App) SetMode(id int) {
 	var ok bool
 	a.mode, ok = a.modes[id]
-	if ! ok {
+	if !ok {
 		a.Panic("Set mode to a mode that doesn't exist.")
 	}
 	a.Redraw()

@@ -136,7 +136,7 @@ func (t *Table) Update(records interface{}, columns []string) {
 	}
 
 	for i := 0; sum(t.widths) <= (t.Width + 1); i++ {
-		t.widths[i % len(t.widths)]++
+		t.widths[i%len(t.widths)]++
 	}
 
 	// Bound our cursor to the potentially newly modified list
